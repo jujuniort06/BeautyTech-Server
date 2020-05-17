@@ -1,0 +1,23 @@
+{
+  "name": "beautytech-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jujuniort06/BeautyTech-Server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jujuniort06/BeautyTech-Server/issues"
+  },
+  "homepage": "https://github.com/jujuniort06/BeautyTech-Server#readme",
+  "devDependencies": {
+    "typescript": "^3.9.2"
+  },
+  "keywords": [],
+  "description": ""
+}
