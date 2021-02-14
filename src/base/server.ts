@@ -1,9 +1,9 @@
 import express = require("express");
-import { ORM } from "../database/orm";
-import * as WebSocket from 'ws';
 import * as http from 'http';
-import { VPWebSocket, WebSocketServer } from "./kernel/vpwebsocket";
-import { Execute } from "../app/eval/execute";
+import { attachControllers } from '@decorators/express';
+import { UserAction } from '../actions/user.action';
+import { SequelizeORM } from "../sequelize/sequelize";
+
 
 var cors = require('cors');
 var bodyParser = require('body-parser');
@@ -13,44 +13,10 @@ export class Server {
 
     private server : any = null;
     private app    : express.Application;
-    private wss    : WebSocket.Server;    
 
     private constructor(){
-        this.app    = express();
-        this.server = http.createServer(this.app);
-        this.wss    = new WebSocket.Server({server: this.server, path : '/websocket'});
-
-        WebSocketServer.getInstance().setWss(this.wss);
-
-        this.wss.on('connection', (ws : any) => {
-            ws.isAlive = true;
-            ws.topics = [];
-
-            ws.on('message', (message : string) => {
-               console.log(message);
-               new VPWebSocket(ws).processMessage(message);
-            });
-
-            ws.on('pong', () => {
-                ws.isAlive = true;
-            });
-        });        
-
-        setInterval(() => {
-            this.wss.clients.forEach((ws : any) => {
-                if (!ws.isAlive){
-                    (<WebSocket>ws).terminate();
-                    return;
-                }
-
-                ws.isAlive = false;
-                (<WebSocket>ws).ping(null, false);
-            });
-        }, 15000);
-        
-        setInterval(() => {
-            new Execute();
-        }, 300000);
+      this.app    = express();
+      this.server = http.createServer(this.app);
     }
 
     public static getInstance() : Server{
@@ -66,26 +32,18 @@ export class Server {
     }
 
     private async prepareExpressApp() {
-        let orm = ORM.getInstance();
-
         this.app.use(cors({maxAge : 86400}));
-        this.app.use(bodyParser.json({limit: '1mb'}));
-        this.app.use(bodyParser.urlencoded({limit: '1mb', extended: true }));
-        this.app.use((req, res, next) => {
-            let request : any = req;
-            
-            request.em = orm.getORM().em.fork();
-            next();
-          });
-    }
+        this.app.use(bodyParser.json());
 
-    private reggisterActions() : void {
-        require('../app/actions');
+        attachControllers(this.app, [UserAction]);           
+
+        SequelizeORM.getInstance().createORM();
+        // DatabaseConnection.getInstance().connect();
+        
+        // new Routes().registerRoutes(this.app);
     }
 
     public runExpressApp(port : number) : void {
-        this.reggisterActions();
-
         this.server.listen(port, () => {
             console.log('Server started at ' + port);
         });
